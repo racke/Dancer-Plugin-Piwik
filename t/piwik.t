@@ -55,13 +55,46 @@ like piwik_view(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
 like piwik_view(%args), qr{A sku.*My desc.*first.*second.*1\.2}s, "Product ok";
 
 
+%args = (
+         subtotal => 200,
+         cart => [
+                  {
+                   sku => '1234',
+                   description => 'A shoe',
+                   categories => [
+                                  'sport shoes',
+                                 ],
+                   price => 100,
+                   quantity => 2,
+                  }
+                 ],
+        );
+
 like piwik_cart(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik cart";
 like piwik_cart(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
   "Found id on piwik cart";
+like piwik_cart(%args), qr{addEcommerceItem.*1234.*A shoe.*sport shoes.*100.*2}s,
+  "Cart seems ok";
+
+
+delete $args{subtotal};
+
+$args{order} = {
+                order_number => '12341234',
+                total_cost => 100,
+                subtotal => 200,
+                shipping => 15,
+               };
 
 like piwik_order(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik order";
 like piwik_order(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
   "Found id on piwik order";
+
+like piwik_order(%args), qr{addEcommerceItem.*1234.*A shoe.*sport shoes.*100.*2}s,
+  "Cart seems ok";
+like piwik_order(%args),
+  qr{trackEcommerceOrder.*12341234.*100.*200.*false.*15.*false}s,
+  "Orders appear good";
 
 done_testing;
 

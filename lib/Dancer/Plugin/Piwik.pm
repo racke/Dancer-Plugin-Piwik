@@ -69,16 +69,13 @@ The price of the item
 
 =back
 
-=head2 piwik_cart
+=head2 piwik_cart(cart => \@items, subtotal => $subtotal)
 
-Generate js for cart view
-
-=head2 piwik_order
-
-Generate js for the receipt
+Generate js for cart view. Requires two named arguments. The C<cart>
+argument must point to an arrayref of hashref products, with the same
+keys of C<piwik_view>, and an additional key C<quantity>.
 
 =cut
-
 
 sub _piwik {
     return _generate_js();
@@ -94,6 +91,7 @@ sub _piwik_category {
 sub _piwik_view {
     my %args = @_;
     my $product = $args{product};
+    die "Missing product" unless $product;
     my $arg = [
                setEcommerceView => $product->{sku},
                $product->{description},
@@ -105,13 +103,81 @@ sub _piwik_view {
 
 sub _piwik_cart {
     my %args = @_;
-    my @addendum;
+    my $subtotal = $args{subtotal};
+    my $cart = $args{cart};
+    die "Missing arguments cart and/or subtotal" unless $cart && $subtotal;
+    my @addendum = _unroll_cart($cart);
+    push @addendum, [ trackEcommerceCartUpdate => $subtotal + 0 ];
     return _generate_js(@addendum);
 }
 
+sub _unroll_cart {
+    my $cart = shift;
+    my @addendum;
+    foreach my $item (@$cart) {
+        push @addendum, [
+                         addEcommerceItem => $item->{sku},
+                         $item->{description},
+                         [ @{ $item->{categories} } ],
+                         $item->{price} + 0,
+                         $item->{quantity} + 0,
+                        ];
+    }
+    return @addendum;
+}
+
+=head2 piwik_order(cart => \@items, order => { order_number => $id, total_cost => $total, subtotal => $subtotal, taxes => $taxes, shipping => $shipping, discount => $discount }
+
+Generate js for the receipt. Two required arguments: C<cart> is the
+same as C<piwik_cart>, while order is an hashref with the following keys:
+
+=over 4
+
+=item order_number (required)
+
+=item total_cost (required)
+
+=item subtotal (optional)
+
+=item taxes (optional)
+
+=item shipping (optional)
+
+=item discount (optional)
+
+=back
+
+=cut
+
 sub _piwik_order {
     my %args = @_;
-    my @addendum;
+    my $cart = $args{cart};
+    my $order = $args{order};
+    die "Missing argument cart or order" unless $cart && $order;
+    my @addendum = _unroll_cart($cart);
+    foreach my $i (qw/total_cost order_number/) {
+        die "Missing $i" unless $order->{$i};
+    }
+    # avoid touching the original
+    $order = { %$order };
+
+    foreach my $i (qw/subtotal taxes shipping discount/) {
+        if (defined $order->{$i}) {
+            # coerce it to a number
+            $order->{$i} += 0;
+        }
+        else {
+            # set it to false
+            $order->{$i} = \0;
+        }
+    }
+    push @addendum, [trackEcommerceOrder => $order->{order_number} .'',
+                     $order->{total_cost} + 0,
+                     $order->{subtotal},
+                     $order->{taxes},
+                     $order->{shipping},
+                     $order->{discount},
+                    ];
     return _generate_js(@addendum);
 }
 
