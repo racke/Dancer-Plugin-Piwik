@@ -28,9 +28,17 @@ like piwik, qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E}, "Found id on piwik
 
 my %args;
 
+%args = ( category => 'Strazze' );
 like piwik_category(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik category";
 like piwik_category(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
   "Found id on piwik category";
+like piwik_category(%args), qr{setEcommerceView}, "Found the view";
+like piwik_category(%args), qr{Strazze}, "Found the view";
+
+eval {
+    piwik_category;
+};
+like $@, qr/Missing category/, "Found exception";
 
 like piwik_view(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik view";
 like piwik_view(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},

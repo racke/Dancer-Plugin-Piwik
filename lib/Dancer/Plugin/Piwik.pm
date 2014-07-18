@@ -42,9 +42,10 @@ In your module
 
 Return generic code for page view tracking. No argument required.
 
-=head2 piwik_category
+=head2 piwik_category(category => "name")
 
-Generate js for category pages
+Generate js for category pages. Requires a named argument C<category>
+with the name of the category to track.
 
 =head2 piwik_view
 
@@ -67,34 +68,38 @@ sub _piwik {
 
 sub _piwik_category {
     my %args = @_;
-    my $addendum = '';
-    return _generate_js($addendum);
+    my $category = $args{category};
+    die "Missing category" unless $category;
+    return _generate_js([ setEcommerceView => \0, \0, $category  ]);
 }
 
 sub _piwik_view {
     my %args = @_;
-    my $addendum = '';
-    return _generate_js($addendum);
+    my @addendum;
+    return _generate_js(@addendum);
 }
 
 sub _piwik_cart {
     my %args = @_;
-    my $addendum = '';
-    return _generate_js($addendum);
+    my @addendum;
+    return _generate_js(@addendum);
 }
 
 sub _piwik_order {
     my %args = @_;
-    my $addendum = '';
-    return _generate_js($addendum);
+    my @addendum;
+    return _generate_js(@addendum);
 }
 
-
 sub _generate_js {
-    my ($addendum) = @_;
+    my (@args) = @_;
     my $piwik_url = plugin_setting->{url};
     my $piwik_id  = plugin_setting->{id};
-    $addendum ||= '';
+    my $addendum = '';
+    foreach my $arg (@args) {
+        $addendum .= '_paq.push(' . to_json($arg) . ");\n";
+    }
+
     die "Missing configuration: id and url are mandatory!"
       unless defined($piwik_url) && defined($piwik_id);
     my $js = <<"JAVASCRIPT";
