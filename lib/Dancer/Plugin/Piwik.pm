@@ -3,6 +3,9 @@ package Dancer::Plugin::Piwik;
 use 5.010001;
 use strict;
 use warnings FATAL => 'all';
+use Dancer qw/:syntax/;
+use Dancer::Plugin;
+
 
 =head1 NAME
 
@@ -34,6 +37,93 @@ In your module
 
 
 =head1 EXPORTED KEYWORDS
+
+=head2 piwik
+
+Return generic code for page view tracking. No argument required.
+
+=head2 piwik_category
+
+Generate js for category pages
+
+=head2 piwik_view
+
+Generate js for flypages
+
+=head2 piwik_cart
+
+Generate js for cart view
+
+=head2 piwik_order
+
+Generate js for the receipt
+
+=cut
+
+
+sub _piwik {
+    return _generate_js();
+}
+
+sub _piwik_category {
+    my %args = @_;
+    my $addendum = '';
+    return _generate_js($addendum);
+}
+
+sub _piwik_view {
+    my %args = @_;
+    my $addendum = '';
+    return _generate_js($addendum);
+}
+
+sub _piwik_cart {
+    my %args = @_;
+    my $addendum = '';
+    return _generate_js($addendum);
+}
+
+sub _piwik_order {
+    my %args = @_;
+    my $addendum = '';
+    return _generate_js($addendum);
+}
+
+
+sub _generate_js {
+    my ($addendum) = @_;
+    my $piwik_url = plugin_setting->{url};
+    my $piwik_id  = plugin_setting->{id};
+    $addendum ||= '';
+    die "Missing configuration: id and url are mandatory!"
+      unless defined($piwik_url) && defined($piwik_id);
+    my $js = <<"JAVASCRIPT";
+<script type="text/javascript">
+  var _paq = _paq || [];
+  $addendum
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u=(("https:" == document.location.protocol) ? "https" : "http") + "://$piwik_url/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', $piwik_id ]);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0]; g.type='text/javascript';
+    g.defer=true; g.async=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<noscript><p><img src="http://$piwik_url/piwik.php?idsite=$piwik_id" style="border:0;" alt="" /></p></noscript>
+JAVASCRIPT
+        return $js;
+}
+
+register piwik => \&_piwik;
+register piwik_category => \&_piwik_category;
+register piwik_view => \&_piwik_view;
+register piwik_cart => \&_piwik_cart;
+register piwik_order => \&_piwik_order;
+
+register_plugin;
+
 
 =head1 AUTHOR
 

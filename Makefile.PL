@@ -18,6 +18,9 @@ WriteMakefile(
         'Test::More' => 0,
     },
     PREREQ_PM => {
+                  Dancer => 1.3124,
+                  JSON => 0,
+                 },
         #'ABC'              => 1.6,
         #'Foo::Bar::Module' => 5.0401,
     },
