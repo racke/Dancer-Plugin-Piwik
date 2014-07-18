@@ -47,9 +47,27 @@ Return generic code for page view tracking. No argument required.
 Generate js for category pages. Requires a named argument C<category>
 with the name of the category to track.
 
-=head2 piwik_view
+=head2 piwik_view(product => { sku => $sku, description => $desc, categories => \@categories, price => $price  })
 
-Generate js for flypages
+Generate js for flypages. Expects a named argument product, paired
+with an hashref with the product data, having the following keys
+
+=over 4
+
+=item sku
+
+=item description
+
+=item categories
+
+(an arrayref with the names of the categories). An empty arrayref can
+do as well).
+
+=item price
+
+The price of the item
+
+=back
 
 =head2 piwik_cart
 
@@ -75,8 +93,14 @@ sub _piwik_category {
 
 sub _piwik_view {
     my %args = @_;
-    my @addendum;
-    return _generate_js(@addendum);
+    my $product = $args{product};
+    my $arg = [
+               setEcommerceView => $product->{sku},
+               $product->{description},
+               [ @{ $product->{categories} } ],
+               $product->{price} + 0,
+              ];
+    return _generate_js($arg);
 }
 
 sub _piwik_cart {

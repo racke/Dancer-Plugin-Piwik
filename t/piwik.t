@@ -40,9 +40,20 @@ eval {
 };
 like $@, qr/Missing category/, "Found exception";
 
+%args = (
+         product => {
+                     sku => 'A sku',
+                     description => 'My desc',
+                     categories => [qw/first second/],
+                     price => 1.20,
+                    },
+        );
+
 like piwik_view(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik view";
 like piwik_view(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
   "Found id on piwik view";
+like piwik_view(%args), qr{A sku.*My desc.*first.*second.*1\.2}s, "Product ok";
+
 
 like piwik_cart(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik cart";
 like piwik_cart(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
