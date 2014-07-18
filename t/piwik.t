@@ -33,15 +33,16 @@ like piwik_category(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
   "Found id on piwik category";
 
 like piwik_view(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik view";
-like piwik_view(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E}, "Found id on piwik view";
+like piwik_view(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
+  "Found id on piwik view";
 
 like piwik_cart(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik cart";
-like piwik_cart(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E}, "Found id on piwik cart";
+like piwik_cart(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
+  "Found id on piwik cart";
 
 like piwik_order(%args), qr{\Q//$piwik_url/"\E}, "Found url on piwik order";
-like piwik_order(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E}, "Found id on piwik order";
-
-
+like piwik_order(%args), qr{\Q//$piwik_url/piwik.php?idsite=$piwik_id"\E},
+  "Found id on piwik order";
 
 done_testing;
 
