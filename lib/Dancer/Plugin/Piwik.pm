@@ -84,14 +84,18 @@ sub _piwik {
 sub _piwik_category {
     my %args = @_;
     my $category = $args{category};
-    die "Missing category" unless $category;
+    unless ($category) {
+        return _generate_js();
+    }
     return _generate_js([ setEcommerceView => \0, \0, $category  ]);
 }
 
 sub _piwik_view {
     my %args = @_;
     my $product = $args{product};
-    die "Missing product" unless $product;
+    unless ($product) {
+        return _generate_js();
+    }
     my $arg = [
                setEcommerceView => $product->{sku},
                $product->{description},
@@ -105,7 +109,9 @@ sub _piwik_cart {
     my %args = @_;
     my $subtotal = $args{subtotal};
     my $cart = $args{cart};
-    die "Missing arguments cart and/or subtotal" unless $cart && $subtotal;
+    unless ($cart && defined($subtotal)) {
+        return _generate_js();
+    }
     my @addendum = _unroll_cart($cart);
     push @addendum, [ trackEcommerceCartUpdate => $subtotal + 0 ];
     return _generate_js(@addendum);
@@ -153,7 +159,9 @@ sub _piwik_order {
     my %args = @_;
     my $cart = $args{cart};
     my $order = $args{order};
-    die "Missing argument cart or order" unless $cart && $order;
+    unless ($cart && $order) {
+        return _generate_js();
+    }
     my @addendum = _unroll_cart($cart);
     foreach my $i (qw/total_cost order_number/) {
         die "Missing $i" unless $order->{$i};
