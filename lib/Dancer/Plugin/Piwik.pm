@@ -13,11 +13,11 @@ Dancer::Plugin::Piwik - Generate JS code for Piwik
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 =head1 SYNOPSIS
@@ -35,8 +35,25 @@ In your module
     use Dancer::Plugin::Piwik;
 
 
+=head1 CONFIGURATION
+
+Two keys are required:
+
+=head2 id
+
+The numeric id of the tracked site (you find it in the Piwik admin).
+
+=head2 url
+
+The url of the tracking site, B<without protocol> and B<without
+trailing slash>. E.g.
+
+ mysite.org/stats
 
 =head1 EXPORTED KEYWORDS
+
+All the following keywords support the boolean argument C<ajax>.
+Instead of the javascript, a perl structure will be returned.
 
 =head2 piwik
 
@@ -78,23 +95,24 @@ keys of C<piwik_view>, and an additional key C<quantity>.
 =cut
 
 sub _piwik {
-    return _generate_js();
+    my %args = @_;
+    return _generate_js($args{ajax});
 }
 
 sub _piwik_category {
     my %args = @_;
     my $category = $args{category};
     unless ($category) {
-        return _generate_js();
+        return _generate_js($args{ajax});
     }
-    return _generate_js([ setEcommerceView => \0, \0, $category  ]);
+    return _generate_js($args{ajax}, [ setEcommerceView => \0, \0, $category  ]);
 }
 
 sub _piwik_view {
     my %args = @_;
     my $product = $args{product};
     unless ($product) {
-        return _generate_js();
+        return _generate_js($args{ajax});
     }
     my $arg = [
                setEcommerceView => $product->{sku},
@@ -102,7 +120,7 @@ sub _piwik_view {
                [ @{ $product->{categories} } ],
                $product->{price} + 0,
               ];
-    return _generate_js($arg);
+    return _generate_js($args{ajax}, $arg);
 }
 
 sub _piwik_cart {
@@ -110,11 +128,11 @@ sub _piwik_cart {
     my $subtotal = $args{subtotal};
     my $cart = $args{cart};
     unless ($cart && defined($subtotal)) {
-        return _generate_js();
+        return _generate_js($args{ajax});
     }
     my @addendum = _unroll_cart($cart);
     push @addendum, [ trackEcommerceCartUpdate => $subtotal + 0 ];
-    return _generate_js(@addendum);
+    return _generate_js($args{ajax}, @addendum);
 }
 
 sub _unroll_cart {
@@ -160,7 +178,7 @@ sub _piwik_order {
     my $cart = $args{cart};
     my $order = $args{order};
     unless ($cart && $order) {
-        return _generate_js();
+        return _generate_js($args{ajax});
     }
     my @addendum = _unroll_cart($cart);
     foreach my $i (qw/total_cost order_number/) {
@@ -186,13 +204,24 @@ sub _piwik_order {
                      $order->{shipping},
                      $order->{discount},
                     ];
-    return _generate_js(@addendum);
+    return _generate_js($args{ajax}, @addendum);
 }
 
 sub _generate_js {
-    my (@args) = @_;
+    my ($ajax, @args) = @_;
     my $piwik_url = plugin_setting->{url};
     my $piwik_id  = plugin_setting->{id};
+
+    if ($ajax) {
+        my @elements = (['trackPageView'],
+                        ['enableLinkTracking']);
+        push @elements, @args if @args;
+        return {
+                piwik_url => $piwik_url,
+                piwik_id => $piwik_id,
+                elements => \@elements,
+               };
+    }
     my $addendum = '';
     foreach my $arg (@args) {
         $addendum .= '_paq.push(' . to_json($arg) . ");\n";
