@@ -21,9 +21,6 @@ WriteMakefile(
                   Dancer => 1.3124,
                   JSON => 0,
                  },
-        #'ABC'              => 1.6,
-        #'Foo::Bar::Module' => 5.0401,
-    },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'Dancer-Plugin-Piwik-*' },
 );
