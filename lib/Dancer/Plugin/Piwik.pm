@@ -6,7 +6,6 @@ use warnings FATAL => 'all';
 use Dancer qw/:syntax/;
 use Dancer::Plugin;
 
-
 =head1 NAME
 
 Dancer::Plugin::Piwik - Generate JS code for Piwik
