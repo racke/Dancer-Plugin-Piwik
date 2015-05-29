@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use utf8;
-use Test::More;
+use Test::More tests => 28;
 
 my $builder = Test::More->builder;
 binmode $builder->output,         ":utf8";
@@ -13,6 +13,7 @@ binmode $builder->todo_output,    ":utf8";
 use Dancer ':tests';
 use Dancer::Plugin::Piwik;
 use Dancer::Test;
+use Data::Dumper;
 
 my $piwik_id = 1;
 my $piwik_url = 'localhost/analytics';
@@ -38,7 +39,7 @@ like piwik_category(%args), qr{Strazze}, "Found the view";
 eval {
     piwik_category;
 };
-like $@, qr/Missing category/, "Found exception";
+ok !$@, "No exception for missing category";
 
 %args = (
          product => {
@@ -96,8 +97,76 @@ like piwik_order(%args),
   qr{trackEcommerceOrder.*12341234.*100.*200.*false.*15.*false}s,
   "Orders appear good";
 
-done_testing;
 
+set plugins => {
+                'Piwik' => {
+                            id => '',
+                            url => '',
+                           }
+               };
 
+is piwik, '', "No output";
+is_deeply piwik(ajax => 1), {}, "ajax: empty hash";
 
+is piwik_category(category => 'Test'), '';
+is_deeply piwik_category(ajax => 1, category => 'Test'), {}, "ajax: empty hash";
+
+%args = (
+         product => {
+                     sku => 'A sku',
+                     description => 'My desc',
+                     categories => [qw/first second/],
+                     price => 1.20,
+                    },
+        );
+
+is piwik_view(%args), '';
+is_deeply piwik_view(%args, ajax => 1), {};
+
+%args = (
+         subtotal => 200,
+         cart => [
+                  {
+                   sku => '1234',
+                   description => 'A shoe',
+                   categories => [
+                                  'sport shoes',
+                                 ],
+                   price => 100,
+                   quantity => 2,
+                  }
+                 ],
+        );
+
+is piwik_cart(%args), '';
+is_deeply piwik_cart(%args, ajax => 1), {};
+
+delete $args{subtotal};
+
+$args{order} = {
+                order_number => '12341234',
+                total_cost => 100,
+                subtotal => 200,
+                shipping => 15,
+               };
+
+read_logs;
+
+is piwik_order(%args), '';
+
+is_deeply piwik_order(%args, ajax => 1), {};
+
+my $errors = read_logs;
+
+is_deeply($errors,
+          [
+           {
+            'message' => 'Missing url and id for Piwiki, plugin is disabled',
+            'level' => 'warning'
+           },
+           {
+            'message' => 'Missing url and id for Piwiki, plugin is disabled',
+            'level' => 'warning'
+           }
+          ], "Found errors in the logs when plugin is disabled");
 

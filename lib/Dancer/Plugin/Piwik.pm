@@ -211,6 +211,10 @@ sub _generate_js {
     my $piwik_url = plugin_setting->{url};
     my $piwik_id  = plugin_setting->{id};
 
+    unless ($piwik_url && defined($piwik_id)) {
+        warning "Missing url and id for Piwiki, plugin is disabled";
+        $ajax ? return {} : return '';
+    }
     if ($ajax) {
         my @elements = (['trackPageView'],
                         ['enableLinkTracking']);
@@ -226,8 +230,6 @@ sub _generate_js {
         $addendum .= '_paq.push(' . to_json($arg) . ");\n";
     }
 
-    die "Missing configuration: id and url are mandatory!"
-      unless defined($piwik_url) && defined($piwik_id);
     my $js = <<"JAVASCRIPT";
 <script type="text/javascript">
   var _paq = _paq || [];
