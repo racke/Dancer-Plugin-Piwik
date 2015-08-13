@@ -180,9 +180,15 @@ sub _piwik_order {
         return _generate_js($args{ajax});
     }
     my @addendum = _unroll_cart($cart);
+    my @missing;
     foreach my $i (qw/total_cost order_number/) {
-        die "Missing $i" unless $order->{$i};
+        push @missing, $i unless defined $order->{$i};
     }
+    if (@missing) {
+        warning "Missing order keys: " . join(' ', @missing);
+        return _generate_js($args{ajax});
+    }
+
     # avoid touching the original
     $order = { %$order };
 

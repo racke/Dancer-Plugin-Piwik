@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use utf8;
-use Test::More tests => 28;
+use Test::More tests => 32;
 
 my $builder = Test::More->builder;
 binmode $builder->output,         ":utf8";
@@ -96,6 +96,26 @@ like piwik_order(%args), qr{addEcommerceItem.*1234.*A shoe.*sport shoes.*100.*2}
 like piwik_order(%args),
   qr{trackEcommerceOrder.*12341234.*100.*200.*false.*15.*false}s,
   "Orders appear good";
+
+
+read_logs;
+
+my $faulty = piwik_order(cart => [], order => { total_cost => 0, order_number => '' });
+ok($faulty, "No crash on 0 cost");
+
+my $logs = read_logs;
+is_deeply($logs, [], "Logs are empty") or diag dumper($logs);
+
+$faulty = piwik_order(cart => [], order => {});
+ok($faulty, "No crash on empty order");
+
+$logs = read_logs;
+is_deeply($logs, [
+                  {
+                   level => 'warning',
+                   message => 'Missing order keys: total_cost order_number',
+                  }
+                 ], "Logs have warning") or diag Dumper($logs);
 
 
 set plugins => {
