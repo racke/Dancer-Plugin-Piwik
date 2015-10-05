@@ -178,15 +178,5 @@ is_deeply piwik_order(%args, ajax => 1), {};
 
 my $errors = read_logs;
 
-is_deeply($errors,
-          [
-           {
-            'message' => 'Missing url and id for Piwiki, plugin is disabled',
-            'level' => 'warning'
-           },
-           {
-            'message' => 'Missing url and id for Piwiki, plugin is disabled',
-            'level' => 'warning'
-           }
-          ], "Found errors in the logs when plugin is disabled");
+is_deeply($errors, [], "No errors in the logs");
 

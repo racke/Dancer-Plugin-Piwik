@@ -12,12 +12,20 @@ Dancer::Plugin::Piwik - Generate JS code for Piwik
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
+# on loading, spam the message if disabled
+
+if (plugin_setting->{url} && plugin_setting->{id}) {
+    info "Loading Piwiki plugin";
+}
+else {
+    warning "Missing url and id for Piwiki, plugin is disabled";
+}
 
 =head1 SYNOPSIS
 
@@ -218,7 +226,6 @@ sub _generate_js {
     my $piwik_id  = plugin_setting->{id};
 
     unless ($piwik_url && defined($piwik_id)) {
-        warning "Missing url and id for Piwiki, plugin is disabled";
         $ajax ? return {} : return '';
     }
     if ($ajax) {
