@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use utf8;
-use Test::More tests => 32;
+use Test::More tests => 33;
 
 my $builder = Test::More->builder;
 binmode $builder->output,         ":utf8";
@@ -180,3 +180,14 @@ my $errors = read_logs;
 
 is_deeply($errors, [], "No errors in the logs");
 
+set plugins => {
+                'Piwik' => {
+                            id => $piwik_id,
+                            url => $piwik_url,
+                            username_session_key => 'piwik_username',
+                           }
+               };
+
+session piwik_username => 'myusername';
+like piwik, qr/myusername/;
+diag piwik;

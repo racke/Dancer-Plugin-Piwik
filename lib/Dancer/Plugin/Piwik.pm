@@ -35,12 +35,27 @@ In your configuration:
     Piwik:
       id: "your-id"
       url: "your-url"
+      username_session_key: 'piwik_username'
+
+The username_session_key is optional. If set, the plugin will look
+into the session value for the given key and set that as the tracked
+username. You probably want to that in an hook.
+
 
 In your module
 
     use Dancer ':syntax';
     use Dancer::Plugin::Piwik;
 
+    # if use'ing Dancer::Plugin::Auth::Extensible;
+    hook before => sub {
+        if (my $user = logged_in_user) {
+            session(piwik_username => $user->username);
+        }
+        else {
+            session(piwik_username => undef);
+        }
+    }
 
 =head1 CONFIGURATION
 
@@ -224,7 +239,11 @@ sub _generate_js {
     my ($ajax, @args) = @_;
     my $piwik_url = plugin_setting->{url};
     my $piwik_id  = plugin_setting->{id};
-
+    if (my $session_key = plugin_setting->{username_session_key}) {
+        if (my $username = session($session_key)) {
+            push @args, [ setUserId => $username ];
+        }
+    }
     unless ($piwik_url && defined($piwik_id)) {
         $ajax ? return {} : return '';
     }
