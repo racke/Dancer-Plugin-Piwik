@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use utf8;
-use Test::More tests => 33;
+use Test::More tests => 36;
 
 my $builder = Test::More->builder;
 binmode $builder->output,         ":utf8";
@@ -191,3 +191,33 @@ set plugins => {
 session piwik_username => 'myusername';
 like piwik, qr/myusername/;
 diag piwik;
+
+%args = (search => {
+                    query => 'search terms',
+                    category => 'search category',
+                    matches => 10,
+                   });
+like piwik_search(%args), qr/trackSiteSearch/;
+unlike piwik_search(%args), qr/trackPageView/;
+diag piwik_search(%args);
+diag Dumper(piwik_search(%args, ajax => 1));
+is_deeply(piwik_search(%args, ajax => 1),
+          {
+           'piwik_id' => 1,
+           'piwik_url' => 'localhost/analytics',
+           'elements' => [
+                           [
+                             'trackSiteSearch',
+                             'search terms',
+                             'search category',
+                             10
+                           ],
+                           [
+                             'setUserId',
+                             'myusername'
+                           ],
+                           [
+                             'enableLinkTracking'
+                           ],
+                         ],
+          });

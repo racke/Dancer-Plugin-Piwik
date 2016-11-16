@@ -130,6 +130,26 @@ sub _piwik_category {
     return _generate_js($args{ajax}, [ setEcommerceView => \0, \0, $category  ]);
 }
 
+=head2 piwik_search(search => { query => 'query', category => 'category', matches => 10 }};
+
+Generate js for search results. Requires a C<search> argument with the
+data to pass to piwik. The only mandatory value is C<query>.
+
+=cut
+
+sub _piwik_search {
+    my %args = @_;
+    my $search = $args{search};
+    unless ($search and (ref($search) eq 'HASH') and $search->{query}) {
+        return _generate_js($args{ajax});
+    }
+    my $category = $search->{category} || \0;
+    my $query = $search->{query};
+    my $matches = defined($search->{matches}) ? $search->{matches} : \0;
+    return _generate_js($args{ajax}, [ trackSiteSearch => $query, $category, $matches ]);
+}
+
+
 sub _piwik_view {
     my %args = @_;
     my $product = $args{product};
@@ -239,22 +259,23 @@ sub _generate_js {
     my ($ajax, @args) = @_;
     my $piwik_url = plugin_setting->{url};
     my $piwik_id  = plugin_setting->{id};
+    unless ($piwik_url && defined($piwik_id)) {
+        $ajax ? return {} : return '';
+    }
     if (my $session_key = plugin_setting->{username_session_key}) {
         if (my $username = session($session_key)) {
             push @args, [ setUserId => $username ];
         }
     }
-    unless ($piwik_url && defined($piwik_id)) {
-        $ajax ? return {} : return '';
+    unless (scalar(grep { ref($_) eq 'ARRAY' and $_->[0] eq 'trackSiteSearch' } @args)) {
+        push @args, ['trackPageView'];
     }
+    push @args, ['enableLinkTracking'];
     if ($ajax) {
-        my @elements = (['trackPageView'],
-                        ['enableLinkTracking']);
-        push @elements, @args if @args;
         return {
                 piwik_url => $piwik_url,
                 piwik_id => $piwik_id,
-                elements => \@elements,
+                elements => \@args,
                };
     }
     my $addendum = '';
@@ -266,8 +287,6 @@ sub _generate_js {
 <script type="text/javascript">
   var _paq = _paq || [];
   $addendum
-  _paq.push(['trackPageView']);
-  _paq.push(['enableLinkTracking']);
   (function() {
     var u=(("https:" == document.location.protocol) ? "https" : "http") + "://$piwik_url/";
     _paq.push(['setTrackerUrl', u+'piwik.php']);
@@ -286,6 +305,7 @@ register piwik_category => \&_piwik_category;
 register piwik_view => \&_piwik_view;
 register piwik_cart => \&_piwik_cart;
 register piwik_order => \&_piwik_order;
+register piwik_search => \&_piwik_search;
 
 register_plugin;
 
